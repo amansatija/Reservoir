@@ -91,7 +91,19 @@ public class Reservoir {
     public static void put(final String key, final Object object) throws Exception {
         failIfNotInitialised();
         String json = new Gson().toJson(object);
-        cache.put(key, json);
+        putSerialised(key, json);
+    }
+
+    /**
+     * Put an object into Reservoir with the given key. This a blocking IO operation. Previously
+     * stored object with the same
+     * key (if any) will be overwritten.
+     *
+     * @param key    the key string.
+     */
+    public static void putSerialised(final String key,final String mStrJson) throws Exception {
+        failIfNotInitialised();
+        cache.put(key, mStrJson);
     }
 
     /**
@@ -103,11 +115,12 @@ public class Reservoir {
      * @param object   the object to be stored.
      * @param callback a callback of type {@link com.anupcowkur.reservoir.ReservoirPutCallback}
      *                 which is called upon completion.
+     * @param mBoolWithGson should we use Gson to serialise your object or not ,,,,!!
      */
     public static void putAsync(final String key, final Object object,
-                                final ReservoirPutCallback callback) {
+                                final ReservoirPutCallback callback,boolean mBoolWithGson) {
         failIfNotInitialised();
-        new PutTask(key, object, callback).execute();
+        new PutTask(key, object, callback,mBoolWithGson).execute();
     }
 
     /**
@@ -139,13 +152,25 @@ public class Reservoir {
     /**
      * Get an object from Reservoir with the given key. This a blocking IO operation.
      *
+     * @param key
+     * @return
+     * @throws IOException
+     */
+    public static String get(final String key) throws IOException {
+        failIfNotInitialised();
+        return cache.getString(key).getString();
+    }
+
+    /**
+     * Get an object from Reservoir with the given key. This a blocking IO operation.
+     *
      * @param key      the key string.
      * @param classOfT the Class type of the expected return object.
      * @return the object of the given type if it exists.
      */
     public static <T> T get(final String key, final Class<T> classOfT) throws Exception {
         failIfNotInitialised();
-        String json = cache.getString(key).getString();
+        String json = get(key);
         T value = new Gson().fromJson(json, classOfT);
         if (value == null)
             throw new NullPointerException();
@@ -158,11 +183,13 @@ public class Reservoir {
      * @param key      the key string.
      * @param callback a callback of type {@link com.anupcowkur.reservoir.ReservoirGetCallback}
      *                 which is called upon completion.
+     *@param classOfT
+     *@param mBoolWithGson : shoould we use gson to serialise your object or not ?
      */
     public static <T> void getAsync(final String key, final Class<T> classOfT,
-                                    final ReservoirGetCallback<T> callback) {
+                                    final ReservoirGetCallback<T> callback,final boolean mBoolWithGson) {
         failIfNotInitialised();
-        new GetTask<>(key, classOfT, callback).execute();
+        new GetTask<>(key, classOfT, callback,mBoolWithGson).execute();
     }
 
     /**
@@ -296,19 +323,25 @@ public class Reservoir {
         private Exception e;
         private final ReservoirPutCallback callback;
         final Object object;
-
-        private PutTask(String key, Object object, ReservoirPutCallback callback) {
+        private boolean mBoolWithGson ;
+        private PutTask(String key, Object object, ReservoirPutCallback callback,boolean mboolwithgson) {
             this.key = key;
             this.callback = callback;
             this.object = object;
             this.e = null;
+            this.mBoolWithGson = mboolwithgson;
         }
 
         @Override
         protected Void doInBackground(Void... params) {
 
             try {
-                String json = new Gson().toJson(object);
+                String json = null;
+                if (mBoolWithGson) {
+                    json = new Gson().toJson(object);
+                }else{
+                    json = object.toString();
+                }
                 cache.put(key, json);
             } catch (Exception e) {
                 this.e = e;
@@ -338,21 +371,28 @@ public class Reservoir {
         private final ReservoirGetCallback callback;
         private final Class<T> classOfT;
         private Exception e;
+        private boolean mBoolWithGson;
 
-        private GetTask(String key, Class<T> classOfT, ReservoirGetCallback callback) {
+        private GetTask(String key, Class<T> classOfT, ReservoirGetCallback callback,Boolean mboolwithgson) {
             this.key = key;
             this.callback = callback;
             this.classOfT = classOfT;
             this.e = null;
+            this.mBoolWithGson =mboolwithgson;
         }
 
         @Override
         protected T doInBackground(Void... params) {
             try {
                 String json = cache.getString(key).getString();
-                T value = new Gson().fromJson(json, classOfT);
-                if (value == null)
-                    throw new NullPointerException();
+                T value = null;
+                if (mBoolWithGson) {
+                    value = new Gson().fromJson(json, classOfT);
+                }else{
+                    value = (T) json;
+                }
+//                if (value == null)
+//                    throw new NullPointerException();
                 return value;
             } catch (Exception e) {
                 this.e = e;

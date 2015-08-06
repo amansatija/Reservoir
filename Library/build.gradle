@@ -1,15 +1,15 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:1.2.3'
-        classpath 'com.novoda:bintray-release:0.2.10'
-    }
-}
+//buildscript {
+//    repositories {
+//        mavenCentral()
+//        jcenter()
+//    }
+//    dependencies {
+//        classpath 'com.android.tools.build:gradle:1.2.3'
+//        classpath 'com.novoda:bintray-release:0.2.10'
+//    }
+//}
 apply plugin: 'android-library'
-apply plugin: 'bintray-release'
+//apply plugin: 'bintray-release'
 
 repositories {
     mavenCentral()
@@ -23,8 +23,7 @@ android {
     defaultConfig {
         minSdkVersion 8
         targetSdkVersion 22
-        versionName project.VERSION_NAME
-        versionCode Integer.parseInt(project.VERSION_CODE)
+
     }
 }
 
@@ -35,11 +34,11 @@ dependencies {
     compile 'io.reactivex:rxandroid:0.24.0'
 }
 
-publish {
-    userOrg = 'anupcowkur'
-    groupId = 'com.anupcowkur'
-    artifactId = 'reservoir'
-    publishVersion = project.VERSION_NAME
-    description = 'Reservoir v' + project.VERSION_NAME
-    website = 'https://github.com/anupcowkur/Reservoir'
-}
+//publish {
+//    userOrg = 'anupcowkur'
+//    groupId = 'com.anupcowkur'
+//    artifactId = 'reservoir'
+//    publishVersion = project.VERSION_NAME
+//    description = 'Reservoir v' + project.VERSION_NAME
+//    website = 'https://github.com/anupcowkur/Reservoir'
+//}
